@@ -52,6 +52,13 @@
             padding: 8px;
             text-align: left;
         }
+        #image-container {
+            margin-top: 20px;
+        }
+        #image-container img {
+            max-width: 100%;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -89,18 +96,10 @@
     </div>
 
     <div class="list-section">
-        <h2>上传列表</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>图片类型</th>
-                    <th>图像名称</th>
-                </tr>
-            </thead>
-            <tbody id="upload-list">
-                <!-- 上传记录将显示在这里 -->
-            </tbody>
-        </table>
+        <h2>生成图片</h2>
+        <div id="image-container">
+            <!-- 上传的图片将显示在这里 -->
+        </div>
     </div>
 
     <script>
@@ -122,7 +121,7 @@
             formData.append('image', imageFile);
 
             // 发送数据到后端
-            fetch('http://localhost:3000/upload', {  // 假设后端在本地运行
+            fetch('http://localhost:3000/upload', {
                 method: 'POST',
                 body: formData
             })
@@ -131,11 +130,28 @@
                 // 处理成功响应
                 console.log('Success:', data);
 
-                // 添加上传信息到列表
-                const uploadList = document.getElementById('upload-list');
-                const newRow = document.createElement('tr');
-                newRow.innerHTML = `<td>${imageType}</td><td>${imageFile.name}</td>`;
-                uploadList.appendChild(newRow);
+                // 假设后端已处理并生成了图片
+                // 将生成的图片直接从 results 文件夹加载
+                const imageName = imageFile.name.split('.')[0]; // 获取上传的图片的名称（例如 '14_1'）
+
+                // 生成图片的 URL 地址
+                const imageUrls = [
+                    `http://localhost:3000/results/${imageName}-predict_box-gradcam_2th_stage_box0.jpg`,
+                    `http://localhost:3000/results/${imageName}-GradCAM-gradcam_first_stage_full_image.jpg`,
+                    `http://localhost:3000/results/${imageName}-GradCAM-gradcam_2th_stage_box0.jpg`
+                ];
+
+                // 获取图片容器并清空之前的图片
+                const imageContainer = document.getElementById('image-container');
+                imageContainer.innerHTML = '';  // 清空之前的内容
+
+                // 遍历并显示图片
+                imageUrls.forEach(url => {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = url;  // 设置图片的 src 为结果图片的 URL
+                    imgElement.alt = "生成的图片";
+                    imageContainer.appendChild(imgElement);
+                });
 
                 // 清空输入框
                 document.getElementById('patient-name').value = '';
@@ -150,6 +166,5 @@
             });
         }
     </script>
-
 </body>
 </html>

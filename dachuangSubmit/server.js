@@ -3,9 +3,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const cors = require('cors');  // 导入 CORS 中间件
 
 const app = express();
 const port = 3000;
+
+// 使用 CORS 中间件，允许所有来源访问
+app.use(cors());
 
 // 设置 multer 文件存储
 const storage = multer.diskStorage({
@@ -22,25 +26,13 @@ const upload = multer({ storage });
 
 // 创建静态目录
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// 获取上传文件夹中的图片列表
-app.get('/uploads', (req, res) => {
-    const uploadsDir = path.join(__dirname, 'uploads');
-
-    fs.readdir(uploadsDir, (err, files) => {
-        if (err) {
-            return res.status(500).json({ error: '无法读取上传目录' });
-        }
-        // 过滤只包含图片文件的列表
-        const images = files.filter(file => /\.(jpg|jpeg|png|gif|bmp)$/i.test(file));
-        res.json(images);
-    });
-});
+app.use('/results', express.static(path.join(__dirname, 'results')));  // 新增静态目录提供
 
 // 接收图片上传并处理
 app.post('/upload', upload.single('image'), (req, res) => {
     if (req.file) {
-        const imagePath = path.join(__dirname, 'uploads', req.file.originalname);
+        const imageName = req.file.originalname.split('.')[0]; // 获取输入图片的名字（例如 '14_1'）
+
         const command = `E:/software/anaconda/envs/xai_thyroid/python main.py --config-path xAI_config.json --method GradCAM --image-path uploads/ --output-path results/ --output-numpy results/`;
 
         // 执行 Python 命令
@@ -57,8 +49,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
             console.log(`Stdout: ${stdout}`);
             res.json({
                 message: 'File uploaded and processed successfully',
-                fileName: req.file.originalname,
-                results: stdout // 你可以根据需要调整返回内容
+                fileName: req.file.originalname
             });
         });
     } else {
